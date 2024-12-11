@@ -75,7 +75,7 @@ bash <(curl -s -H "Authorization: token github_pat_11AY3QW7Y0gDrOSFHPk0Pi_SweRbM
 
 - With every update and backup, a notification is sent to the manager robot
 ```
-bash <(curl -s https://raw.githubusercontent.com/wizwizdev/wizwizxui-timebot/main/update.sh)
+bash <(curl -s -H "Authorization: token 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" https://raw.githubusercontent.com/kazio1256/kzmbot/main/update.sh)
 ```
 
 <br>
