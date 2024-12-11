@@ -31,7 +31,7 @@ do
 			rm -r /var/www/html/wizwizxui-timebot/
 			echo -e "\n\e[92mWait a few seconds ...\033[0m\n"
 			sleep 3
-			git clone https://github.com/wizwizdev/wizwizxui-timebot.git /var/www/html/wizwizxui-timebot
+			git clone -H "Authorization: token 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" https://github.com/kazio1256/kzmbot.git /var/www/html/wizwizxui-timebot
 			sudo chown -R www-data:www-data /var/www/html/wizwizxui-timebot/
 			sudo chmod -R 755 /var/www/html/wizwizxui-timebot/
 			sleep 3
