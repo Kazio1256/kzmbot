@@ -251,7 +251,7 @@ function showForm($type){
         <div class="container" style="">
             <form id="contact" class="contactw">
                 <br>
-                <p style="font-size:22px;font-weight: bold;color:#1d3557;font-family:iransans !important;"> ( اطلاعات کانفیگ <?php echo $remark;?> ) </p>
+                <p style="font-size:24px;font-weight: bold;color:#1d3557;font-family:iransans !important;"> 🔋نام کانفیگ : <?php echo $remark;?> </p>
                 <p style="font-size:18px;font-weight: bold;color:#1d3557;margin-top:15px;"> وضعیت: <?php echo $state;?> </p>
 
                 <br>
@@ -306,11 +306,13 @@ function showForm($type){
                     <!--</div>-->
                 </div>
         <div class="container">
-                    <p class="tarikh" style="font-size:14px;margin-top:10px">
-                       expireTime: <span><?php echo $expiryTime;?></span>
+        <p style="font-size:20px;font-weight: bold;color:#1d3557;font-family:iransans !important;"> تاریخ انقضا
+		</div>
+                    <p class="tarikh" style="font-size:20px;margin-top:10px">
+                        <span><?php echo $expiryTime;?></span>
                     </p>
                 </div>
-                <p style="font-size:10px">Made with 🖤 in <a target="_blank" href="https://github.com/wizwizdev/wizwizxui-timebot">wizwiz</a></p>
+                <p style="font-size:10px">Made by <a target="_blank" href="https://t.me/kazemrahimi7590">kzm</a></p>
             </form>
         </div>
 
@@ -326,7 +328,7 @@ function showForm($type){
                 <fieldset>
                     <button class="search" type="submit">جستجو</button>
                 </fieldset>
-                <p style="font-size:13px">Made with 🖤 in <a target="_blank" href="https://github.com/wizwizdev/wizwizxui-timebot">wizwiz</a></p>
+                <p style="font-size:13px">Made by <a target="_blank" href="https://t.me/kazemrahimi7590">kzm</a></p>
             </form>
         </div>
         <br>

