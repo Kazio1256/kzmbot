@@ -244,8 +244,8 @@ function getMainKeys(){
 
     if($botState['agencyState'] == "on" && $userInfo['is_agent'] == 1){
         $mainKeys = array_merge($mainKeys, [
-            
-            [['text'=>$buttonValues['agent_one_buy'],'callback_data'=>"agentOneBuy"]],
+            [['text'=>$buttonValues['agency_setting'],'callback_data'=>"agencySettings"]],
+            [['text'=>$buttonValues['agent_one_buy'],'callback_data'=>"agentOneBuy"],['text'=>$buttonValues['agent_much_buy'],'callback_data'=>"agentMuchBuy"]],
             [['text'=>$buttonValues['my_subscriptions'],'callback_data'=>"agentConfigsList"]],
             ]);
     }else{
@@ -317,28 +317,6 @@ function getAgentKeys(){
         [['text'=>$buttonValues['back_to_main'],'callback_data'=>"mainMenu"]],
     ]]);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function getAdminKeys(){
     global $buttonValues, $mainValues, $from_id, $admin;
     
@@ -361,26 +339,11 @@ function getAdminKeys(){
         [
             ['text'=>$buttonValues['agent_list'],'callback_data'=>"agentsList"],
             ['text'=>'درخواست های رد شده','callback_data'=>"rejectedAgentList"]
-        ],
-        [['text'=>'مدیریت کاربران مجاز','callback_data'=>"manageAllowedUsers"]],
+            ],
         [['text'=>$buttonValues['back_to_main'],'callback_data'=>"mainMenu"]],
     ]]);
+    
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 function setSettings($field, $value){
     global $connection, $botState;
