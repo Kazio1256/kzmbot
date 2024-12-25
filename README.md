@@ -7,16 +7,6 @@
   </a>
 </p> 
 
-<p align="center">
-	<a href="./README.md">
-	English
-	</a>
-	/
-	<a href="./README-fa.md">
-	فارسی
-	</a>
-
-</p>
 
 <h1 align="center"/>Welcome to wizwiz</h1>
 
