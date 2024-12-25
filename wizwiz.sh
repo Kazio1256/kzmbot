@@ -10,13 +10,9 @@ fi
 wait
 
 echo -e "\e[32m
-██     ██ ██ ███████ ██     ██ ██ ███████     ██   ██ ██    ██ ██ 
-██     ██ ██    ███  ██     ██ ██    ███       ██ ██  ██    ██ ██ 
-██  █  ██ ██   ███   ██  █  ██ ██   ███         ███   ██    ██ ██ 
-██ ███ ██ ██  ███    ██ ███ ██ ██  ███         ██ ██  ██    ██ ██ 
- ███ ███  ██ ███████  ███ ███  ██ ███████     ██   ██  ██████  ██ 
+kabani
 \033[0m"
-echo -e "    \e[31mTelegram Channel: \e[34m@wizwizch\033[0m | \e[31mTelegram Group: \e[34m@wizwizdev\033[0m\n"
+echo -e "    \e[31mTelegram Channel: \e[34m@riratech\033[0m | \e[31mTelegram admim: \e[34m@configsupporter\033[0m\n"
 
 #sleep
 echo -e "\e[32mInstalling WizWiz script ... \033[0m\n"
@@ -97,7 +93,7 @@ sudo systemctl restart apache2.service
 
 wait
 
-git clone https://github.com/wizwizdev/wizwizxui-timebot.git /var/www/html/wizwizxui-timebot
+git clone https://github.com/Kazio1256/kzmbot.git /var/www/html/wizwizxui-timebot
 sudo chown -R www-data:www-data /var/www/html/wizwizxui-timebot/
 sudo chmod -R 755 /var/www/html/wizwizxui-timebot/
 echo -e "\n\033[33mWizWiz config and script have been installed successfully\033[0m"
@@ -111,7 +107,7 @@ echo "Directory created: ${RANDOM_CODE}"
 echo "Folder created successfully!"
 
  cd /var/www/html/
- wget -O wizwizpanel.zip https://github.com/wizwizdev/wizwizxui-timebot/releases/download/10.3.1/wizwizpanel.zip
+ wget -O wizwizpanel.zip https://github.com/Kazio1256/kzmbot/releases/download/10.3.1/wizwizpanel.zip
 
  file_to_transfer="/var/www/html/wizwizpanel.zip"
  destination_dir=$(find /var/www/html -type d -name "*${RANDOM_CODE}*" -print -quit)
