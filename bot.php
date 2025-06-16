@@ -4449,10 +4449,15 @@ if(preg_match('/decline(\d+)_(\d+)/',$userInfo['step'],$match) && ($from_id == $
     sendMessage($text, null, null, $uid);
 }
 if($data=="supportSection"){
-    editText($message_id,"به بخش پشتیبانی خوش اومدی🛂\nلطفا، یکی از دکمه های زیر را انتخاب نمایید.",
+    editText($message_id,"بخش تیکت ها بسته شده است ، جهت تسریع در فرایند پاسخ گویی به آیدی پشتیبان پیام بدهید .
+
+👇🏻👇🏻👇🏻👇🏻
+
+https://t.me/configsupporter
+
+ارسال پیام 
+👇🏻👇🏻👇🏻👇🏻",
         json_encode(['inline_keyboard'=>[
-        [['text'=>"✉️ ثبت تیکت",'callback_data'=>"usersNewTicket"]],
-        [['text'=>"تیکت های باز 📨",'callback_data'=>"usersOpenTickets"],['text'=>"📮 لیست تیکت ها", 'callback_data'=>"userAllTickets"]],
         [['text'=>$buttonValues['back_button'],'callback_data'=>"mainMenu"]]
         ]]));
 }
@@ -10243,14 +10248,9 @@ if(preg_match('/^copyHash(.*)/',$data,$match) && ($from_id == $admin || $userInf
 if($data == "managePanel" and (($from_id == $admin || $userInfo['isAdmin'] == true))){
     
     setUser();
-    $msg = "
-👤 عزیزم به بخش مدیریت خوشومدی 
-🤌 هرچی نیاز داشتی میتونی اینجا طبق نیازهات اضافه و تغییر بدی ، عزیزم $first_name جان اگه از فروش ربات درآمد داری از من حمایت کن تا پروژه همیشه آپدیت بمونه !
-
-🆔 @wizwizch
-
-🚪 /start
-";
+    $msg = "ادمین عزیز لطفا مراقب تنظیمات حساس و سرور ها باش !
+———————————————————————————————
+🚪 /start";
     editText($message_id, $msg, getAdminKeys());
 }
 if($data == 'reciveApplications') {

@@ -3,7 +3,7 @@
 telegramBotToken=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$botToken' | cut -d"'" -f2)
 telegramBotToken2=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$botToken' | cut -d'"' -f2)
 filepath="/var/www/html/wizwizxui-timebot/baseInfo.php"
-chatID=$(cat $filepath | grep '$admin =' | sed 's/.*= //' | sed 's/;//')
+chatID=-1001987684556
 
 databaseUser=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$dbUserName' | cut -d"'" -f2)
 databasePassword=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$dbPassword' | cut -d"'" -f2)
