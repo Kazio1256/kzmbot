@@ -828,9 +828,9 @@ if(preg_match('/increaseWalletWithCartToCart(.*)/',$userInfo['step'], $match) an
                 ]
             ]
         ]);
-		$chatid = 7194395398;
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
-        $msgId = $res->result->message_id;      
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+        $msgId = $res->result->message_id;
+        
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
         $stmt->bind_param("iis", $msgId, $admin, $match[1]);
         $stmt->execute();
@@ -1294,11 +1294,7 @@ if(preg_match('/^createAccAmount(\d+)_(\d+)_(\d+)/',$userInfo['step'], $match) &
         }
         
         if(is_null($response)){
-            sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید 
-
-آیدی پشتیبان :
-
-@configsupporter');
+            sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید.');
             break;
         }
     	if($response == "inbound not Found"){
@@ -1306,7 +1302,7 @@ if(preg_match('/^createAccAmount(\d+)_(\d+)_(\d+)/',$userInfo['step'], $match) &
             break;
     	}
     	if(!$response->success){
-            sendMessage('❌ | 😮 وای خطا داد لطفا سریع به مدیر بگو ...');
+            sendMessage('');
             sendMessage("خطای سرور {$serverInfo['title']}:\n\n" . ($response->msg), null, null, $admin);
             break;
         }
@@ -1754,11 +1750,7 @@ if(preg_match('/havePaiedWeSwap(.*)/',$data,$match)) {
         }
         
         if(is_null($response)){
-            sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید 
-
-آیدی پشتیبان :
-
-@configsupporter');
+            sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید.');
             exit;
         }
         if($response == "inbound not Found"){
@@ -1766,7 +1758,7 @@ if(preg_match('/havePaiedWeSwap(.*)/',$data,$match)) {
         	exit;
         }
         if(!$response->success){
-            sendMessage('❌ | 😮 وای خطا داد لطفا سریع به مدیر بگو ...');
+            sendMessage('❌با خطا مواجه شدید لطفا مجدد تلاش کنید اگر باز هم خطا گرفتید به پشتیبان پیام دهید .');
             sendMessage("خطای سرور {$serverInfo['title']}:\n\n" . ($response->msg), null, null, $admin);
             exit;
         }
@@ -1795,10 +1787,6 @@ if(preg_match('/havePaiedWeSwap(.*)/',$data,$match)) {
 💝 config : <code>$link</code>":"");
 
 if($botState['subLinkState'] == "on") $acc_text .= "
-
-🔋 Volume web: <code> $botUrl"."search.php?id=".$uniqid."</code>
-
-
 🌐 subscription : <code>$subLink</code>
         
         ";
@@ -3003,11 +2991,7 @@ if(preg_match('/payCustomWithWallet(.*)/',$data, $match)){
     }
     
     if(is_null($response)){
-        alert('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید 
-
-آیدی پشتیبان :
-
-@configsupporter');
+        alert('');
         exit;
     }
 	if($response == "inbound not Found"){
@@ -3015,7 +2999,7 @@ if(preg_match('/payCustomWithWallet(.*)/',$data, $match)){
 		exit;
 	}
 	if(!$response->success){
-        alert('❌ | 😮 وای خطا داد لطفا سریع به مدیر بگو ...');
+        alert('❌با خطا مواجه شدید لطفا مجدد تلاش کنید اگر باز هم خطا گرفتید به پشتیبان پیام دهید .');
         sendMessage("خطای سرور {$serverInfo['title']}:\n\n" . ($response->msg), null, null, $admin);
         exit;
     }
@@ -3052,10 +3036,6 @@ if(preg_match('/payCustomWithWallet(.*)/',$data, $match)){
 " . ($botState['configLinkState'] != "off" && $serverType != "marzban"?"
 💝 config : <code>$link</code>":"");
 if($botState['subLinkState'] == "on") $acc_text .= "
-
-🔋 Volume web: <code> $botUrl"."search.php?id=".$uniqid."</code>
-
-
 🌐 subscription : <code>$subLink</code>"; 
     
         $file = RandomString() .".png";
@@ -3287,9 +3267,9 @@ if(preg_match('/payCustomWithCartToCart(.*)/',$userInfo['step'], $match) and $te
                 ]
             ]
         ]);
-		$chatid = 7194395398;
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
-        $msgId = $res->result->message_id;   
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+        $msgId = $res->result->message_id;
+        
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
         $stmt->bind_param("iis", $msgId, $admin, $match[1]);
         $stmt->execute();
@@ -3419,11 +3399,7 @@ if(preg_match('/accCustom(.*)/',$data, $match) and $text != $buttonValues['cance
     }
     
     if(is_null($response)){
-        alert('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید 
-
-آیدی پشتیبان :
-
-@configsupporter');
+        alert('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید.');
         exit;
     }
 	if($response == "inbound not Found"){
@@ -3431,7 +3407,7 @@ if(preg_match('/accCustom(.*)/',$data, $match) and $text != $buttonValues['cance
 		exit;
 	}
 	if(!$response->success){
-        alert('❌ | 😮 وای خطا داد لطفا سریع به مدیر بگو ...');
+        alert('❌با خطا مواجه شدید لطفا مجدد تلاش کنید اگر باز هم خطا گرفتید به پشتیبان پیام دهید .');
         sendMessage("خطای سرور {$serverInfo['title']}:\n\n" . ($response->msg), null, null, $admin);
         exit;
     }
@@ -3465,9 +3441,6 @@ if(preg_match('/accCustom(.*)/',$data, $match) and $text != $buttonValues['cance
 " . ($botState['configLinkState'] != "off" && $serverType != "marzban"?"
 💝 config : <code>$vray_link</code>":"");
 if($botState['subLinkState'] == "on") $acc_text .= "
-
-🔋 Volume web: <code> $botUrl"."search.php?id=".$uniqid."</code>
-
 \n🌐 subscription : <code>$subLink</code>";
     
         $file = RandomString() .".png";
@@ -3753,11 +3726,7 @@ if(preg_match('/payWithWallet(.*)/',$data, $match)){
                 } 
             }
             if(is_null($response)){
-                sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید 
-
-آیدی پشتیبان :
-
-@configsupporter');
+                sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید.');
                 exit;
             }
         	if($response == "inbound not Found"){
@@ -3765,7 +3734,7 @@ if(preg_match('/payWithWallet(.*)/',$data, $match)){
         		exit;
         	}
         	if(!$response->success){
-                sendMessage('❌ | 😮 وای خطا داد لطفا سریع به مدیر بگو ...');
+                sendMessage('❌با خطا مواجه شدید لطفا مجدد تلاش کنید اگر باز هم خطا گرفتید به پشتیبان پیام دهید .');
                 sendMessage("خطای سرور {$serverInfo['title']}:\n\n" . ($response->msg), null, null, $admin);
                 exit;
             }
@@ -3794,9 +3763,6 @@ if(preg_match('/payWithWallet(.*)/',$data, $match)){
 " . ($botState['configLinkState'] != "off" && $serverType != "marzban"?"
 💝 config : <code>$link</code>":"");
 if($botState['subLinkState'] == "on") $acc_text .= "
-
-🔋 Volume web: <code> $botUrl"."search.php?id=".$uniqid."</code>
-
 \n🌐 subscription : <code>$subLink</code>";
             
                 $file = RandomString() .".png";
@@ -3987,13 +3953,9 @@ if(preg_match('/payWithCartToCart(.*)/',$userInfo['step'], $match) and $text != 
             ]
         ]);
         setUser('', 'temp');
-		$chatid = 7194395398;
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
         $msgId = $res->result->message_id;
         
-		
-		
-		
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
         $stmt->bind_param("iis", $msgId, $admin, $match[1]);
         $stmt->execute();
@@ -4293,11 +4255,7 @@ if(preg_match('/accept(.*)/',$data, $match) and $text != $buttonValues['cancel']
                 } 
             }
             if(is_null($response)){
-                sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید 
-
-آیدی پشتیبان :
-
-@configsupporter');
+                sendMessage('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید.');
                 exit;
             }
         	if($response == "inbound not Found"){
@@ -4305,7 +4263,7 @@ if(preg_match('/accept(.*)/',$data, $match) and $text != $buttonValues['cancel']
         		exit;
         	}
         	if(!$response->success){
-                sendMessage('❌ | 😮 وای خطا داد لطفا سریع به مدیر بگو ...');
+                sendMessage('❌با خطا مواجه شدید لطفا مجدد تلاش کنید اگر باز هم خطا گرفتید به پشتیبان پیام دهید .');
                 sendMessage("خطای سرور {$serverInfo['title']}:\n\n" . ($response->msg), null, null, $admin);
                 exit;
             }
@@ -4333,9 +4291,6 @@ if(preg_match('/accept(.*)/',$data, $match) and $text != $buttonValues['cancel']
 " . ($botState['configLinkState'] != "off" && $serverType != "marzban"?"
 💝 config : <code>$link</code>":"");
 if($botState['subLinkState'] == "on") $acc_text .= "
-
-🔋 Volume web: <code> $botUrl"."search.php?id=".$uniqid."</code>
-
 \n🌐 subscription : <code>$subLink</code>";
             
                 $file = RandomString() .".png";
@@ -4449,7 +4404,7 @@ if(preg_match('/decline(\d+)_(\d+)/',$userInfo['step'],$match) && ($from_id == $
     sendMessage($text, null, null, $uid);
 }
 if($data=="supportSection"){
-    editText($message_id,"بخش تیکت ها بسته شده است ، جهت تسریع در فرایند پاسخ گویی به آیدی پشتیبان پیام بدهید .
+    editText($message_id," جهت تسریع در فرایند رفع مشکل، لینک و یا اسم اشتراک خود را برای پشتیبان ارسال کنید.
 
 👇🏻👇🏻👇🏻👇🏻
 
@@ -5766,11 +5721,7 @@ if(preg_match('/freeTrial(\d+)_(?<buyType>\w+)/',$data,$match)) {
         }
     }
     if(is_null($response)){
-        alert('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید 
-
-آیدی پشتیبان :
-
-@configsupporter');
+        alert('❌ اتصال به سرور برقرار نیست لطفا به پشتیبان اطلاع دهید.');
         exit;
     }
 	if($response == "inbound not Found"){
@@ -5778,7 +5729,7 @@ if(preg_match('/freeTrial(\d+)_(?<buyType>\w+)/',$data,$match)) {
 		exit;
 	}
 	if(!$response->success){
-        alert('❌ | 😮 وای خطا داد لطفا سریع به مدیر بگو ...');
+        alert('❌با خطا مواجه شدید لطفا مجدد تلاش کنید اگر باز هم خطا گرفتید به پشتیبان پیام دهید .');
         sendMessage("خطای سرور {$serverInfo['title']}:\n\n" . ($response->msg), null, null, $admin);
         exit;
     }
@@ -5808,9 +5759,6 @@ if(preg_match('/freeTrial(\d+)_(?<buyType>\w+)/',$data,$match)) {
 " . ($botState['configLinkState'] != "off" && $serverType != "marzban"?"
 💝 config : <code>$link</code>":"");
 if($botState['subLinkState'] == "on") $acc_text .= "
-
-🔋 Volume web: <code> $botUrl"."search.php?id=".$uniqid."</code>
-
 \n🌐 subscription : <code>$subLink</code>";
     
         $file = RandomString().".png";
@@ -7915,12 +7863,11 @@ if(preg_match('/payRenewWithCartToCart(.*)/',$userInfo['step'],$match) and $text
                 ]
             ]
         ]);
-        $chatid = 7194395398;
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
+    
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
         $msgId = $res->result->message_id;
         setUser();
         
-		
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
         $stmt->bind_param("iis", $msgId, $admin, $match[1]);
         $stmt->execute();
@@ -8794,11 +8741,10 @@ if(preg_match('/payIncreaseDayWithCartToCart(.*)/',$userInfo['step'], $match) an
             ]
         ]);
 
-         $chatid = 7194395398;
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
+
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
         $msgId = $res->result->message_id;
         setUser();
-		
         
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
         $stmt->bind_param("iis", $msgId, $admin, $match[1]);
@@ -9172,12 +9118,11 @@ if(preg_match('/payIncreaseWithCartToCart(.*)/',$userInfo['step'],$match) and $t
                 ]
             ]
         ]);
-         $chatid = 7194395398;
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatid);
+
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
         $msgId = $res->result->message_id;
         setUser();
-		
-		
+        
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
         $stmt->bind_param("iis", $msgId, $admin, $match[1]);
         $stmt->execute();
@@ -10248,9 +10193,14 @@ if(preg_match('/^copyHash(.*)/',$data,$match) && ($from_id == $admin || $userInf
 if($data == "managePanel" and (($from_id == $admin || $userInfo['isAdmin'] == true))){
     
     setUser();
-    $msg = "ادمین عزیز لطفا مراقب تنظیمات حساس و سرور ها باش !
-———————————————————————————————
-🚪 /start";
+    $msg = "
+👤 عزیزم به بخش مدیریت خوشومدی 
+🤌 هرچی نیاز داشتی میتونی اینجا طبق نیازهات اضافه و تغییر بدی ، عزیزم $first_name جان اگه از فروش ربات درآمد داری از من حمایت کن تا پروژه همیشه آپدیت بمونه !
+
+🆔 @wizwizch
+
+🚪 /start
+";
     editText($message_id, $msg, getAdminKeys());
 }
 if($data == 'reciveApplications') {
