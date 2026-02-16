@@ -111,7 +111,7 @@ do
 			echo "Folder created successfully!"
 			
 			 cd /var/www/html/
-			 wget -O wizwizpanel.zip https://github.com/wizwizdev/wizwizxui-timebot/releases/download/10.3.1/wizwizpanel.zip
+			 wget -O wizwizpanel.zip https://github.com/Kazio1256/kzmbot/releases/download/10.3.1/wizwizpanel.zip
 			
 			 file_to_transfer="/var/www/html/wizwizpanel.zip"
 			 destination_dir=$(find /var/www/html -type d -name "*${RANDOM_CODE}*" -print -quit)
@@ -171,10 +171,10 @@ do
 
 			(crontab -l ; echo "0 * * * * ./dbbackupwizwiz.sh") | sort - | uniq - | crontab -
 			
-			wget https://raw.githubusercontent.com/wizwizdev/wizwizxui-timebot/main/dbbackupwizwiz.sh | chmod +x dbbackupwizwiz.sh
+			wget https://raw.githubusercontent.com/Kazio1256/kzmbot/main/dbbackupwizwiz.sh | chmod +x dbbackupwizwiz.sh
 			./dbbackupwizwiz.sh
    
-			wget https://raw.githubusercontent.com/wizwizdev/wizwizxui-timebot/main/dbbackupwizwiz.sh | chmod +x dbbackupwizwiz.sh
+			wget https://raw.githubusercontent.com/Kazio1256/kzmbot/main/dbbackupwizwiz.sh | chmod +x dbbackupwizwiz.sh
 			./dbbackupwizwiz.sh
 			
 			echo -e "\n\e[92m The backup settings have been successfully completed.\033[0m\n"
