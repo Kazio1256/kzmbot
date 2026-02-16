@@ -244,8 +244,8 @@ function getMainKeys(){
 
     if($botState['agencyState'] == "on" && $userInfo['is_agent'] == 1){
         $mainKeys = array_merge($mainKeys, [
-#            [['text'=>$buttonValues['agency_setting'],'callback_data'=>"agencySettings"]],
-            [['text'=>$buttonValues['agent_one_buy'],'callback_data'=>"agentOneBuy"]],
+            [['text'=>$buttonValues['agency_setting'],'callback_data'=>"agencySettings"]],
+            [['text'=>$buttonValues['agent_one_buy'],'callback_data'=>"agentOneBuy"],['text'=>$buttonValues['agent_much_buy'],'callback_data'=>"agentMuchBuy"]],
             [['text'=>$buttonValues['my_subscriptions'],'callback_data'=>"agentConfigsList"]],
             ]);
     }else{
