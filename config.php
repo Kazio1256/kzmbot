@@ -244,8 +244,8 @@ function getMainKeys(){
 
     if($botState['agencyState'] == "on" && $userInfo['is_agent'] == 1){
         $mainKeys = array_merge($mainKeys, [
-            [['text'=>$buttonValues['agency_setting'],'callback_data'=>"agencySettings"]],
-            [['text'=>$buttonValues['agent_one_buy'],'callback_data'=>"agentOneBuy"],['text'=>$buttonValues['agent_much_buy'],'callback_data'=>"agentMuchBuy"]],
+#            [['text'=>$buttonValues['agency_setting'],'callback_data'=>"agencySettings"]],
+            [['text'=>$buttonValues['agent_one_buy'],'callback_data'=>"agentOneBuy"]],
             [['text'=>$buttonValues['my_subscriptions'],'callback_data'=>"agentConfigsList"]],
             ]);
     }else{
@@ -4986,47 +4986,65 @@ function editInbound($server_id, $uniqid, $uuid, $protocol, $netType = 'tcp', $s
     return $response = json_decode($response);
 }
 function getMarzbanToken($server_id){
+    $cacheDir = __DIR__ . "/cache";
+    if(!is_dir($cacheDir)) {
+        mkdir($cacheDir, 0755, true); // اگر فولدر cache وجود نداشت می‌سازیم
+    }
+
+    $cacheFile = $cacheDir . "/token_$server_id.json";
+
+    // بررسی توکن کش شده
+    if(file_exists($cacheFile)){
+        $cached = json_decode(file_get_contents($cacheFile));
+        if(isset($cached->access_token) && time() < $cached->expires_at){
+            return $cached;
+        }
+    }
+
+    // اگر توکن معتبر نبود، لاگین جدید
     global $connection;
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id = ?");
     $stmt->bind_param('i', $server_id);
     $stmt->execute();
     $server_info = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
-    $panel_url = $server_info['panel_url'];
-    $username = $server_info['username'];
-    $password = $server_info['password'];
-    
-    $loginUrl = $panel_url .'/api/admin/token';
-    $postFields = array(
-        'username' => $username,
-        'password' => $password
-    );
-    
-    
+
+    $loginUrl = $server_info['panel_url'] . '/api/admin/token';
+    $postFields = [
+        'username' => $server_info['username'],
+        'password' => $server_info['password']
+    ];
+
     $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $loginUrl);
-    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($curl, CURLOPT_POST, 1);
-    curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 3);
-    curl_setopt($curl, CURLOPT_TIMEOUT, 3); 
-    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($postFields));
-    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/x-www-form-urlencoded',
-            'accept: application/json'
-        ));
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $loginUrl,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query($postFields),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded', 'Accept: application/json'],
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_TIMEOUT => 3,
+        CURLOPT_FOLLOWLOCATION => true
+    ]);
+
     $response = curl_exec($curl);
-    if (curl_error($curl)) {
+    if(curl_error($curl)){
         return (object) ['success'=>false, 'detail'=>curl_error($curl)];
     }
     curl_close($curl);
 
-    return json_decode($response);
+    $json = json_decode($response);
+    if(isset($json->access_token)){
+        $json->expires_at = time() + 3600; // اعتبار توکن 1 ساعت
+        file_put_contents($cacheFile, json_encode($json)); // ذخیره در cache
+    }
+
+    return $json;
 }
+
 function getMarzbanJson($server_id, $token = null){
     global $connection;
-    
+
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5035,26 +5053,31 @@ function getMarzbanJson($server_id, $token = null){
 
     $panel_url = $server_info['panel_url'];
 
+    // استفاده از توکن کش
     if($token == null) $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
+    if(isset($token->detail)) return (object) ['success'=>false,'msg'=>$token->detail];
+
     $panel_url .= '/api/users';
     $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $panel_url);
-    curl_setopt($curl, CURLOPT_HTTPGET, true);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-        'Accept: application/json',
-        'Authorization: Bearer ' . $token->access_token
-    ));
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $panel_url,
+        CURLOPT_HTTPGET => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Accept: application/json',
+            'Authorization: Bearer ' . $token->access_token
+        ]
+    ]);
 
     $response = json_decode(curl_exec($curl));
     curl_close($curl);
 
     return $response;
 }
+
 function getMarzbanUserInfo($server_id, $remark){
     global $connection;
-    
+
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5063,30 +5086,42 @@ function getMarzbanUserInfo($server_id, $remark){
 
     $panel_url = $server_info['panel_url'];
 
+    // گرفتن توکن یکبار برای استفاده در کل حلقه
+    $token = getMarzbanToken($server_id);
+    if(isset($token->detail)) {
+        return (object) ['success'=>false,'msg'=>$token->detail];
+    }
+
     $configInfo = array();
     $curl = curl_init();
     for($i = 0; $i <= 10; $i++){
-        $info = getMarzbanUser($server_id, $remark);
-		$subLink = "/sub/" . (explode("/sub/", $info->subscription_url)[1]);
-		$info->subscription_url = $subLink;
+        // ارسال توکن به getMarzbanUser
+        $info = getMarzbanUser($server_id, $remark, $token);
+        if(!$info) continue;
+
+        $subLink = "/sub/" . (explode("/sub/", $info->subscription_url)[1]);
+        $info->subscription_url = $subLink;
+
         curl_setopt($curl, CURLOPT_URL, $panel_url . $info->subscription_url);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 3);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_TIMEOUT, 3); 
         $response = curl_exec($curl);
+
         if($response && !curl_error($curl)){
             $configInfo = $info;
             break;
         }
-		if($i == 10) $configInfo = $info;
+        if($i == 10) $configInfo = $info;
     }
     curl_close($curl);
 
     return (object) $configInfo;
 }
+
 function getMarzbanUser($server_id, $remark, $token = null){
     global $connection;
-    
+
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5095,9 +5130,15 @@ function getMarzbanUser($server_id, $remark, $token = null){
 
     $panel_url = $server_info['panel_url'];
 
-    if($token == null) $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
-    
+    // گرفتن توکن یکبار اگر پاس داده نشده
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
+
+    if(isset($token->detail)) {
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
+
     $panel_url .= '/api/user/' . urlencode($remark);
 
     $curl = curl_init();
@@ -5110,13 +5151,14 @@ function getMarzbanUser($server_id, $remark, $token = null){
     ));
 
     $response = json_decode(curl_exec($curl));
-    
     curl_close($curl);
+
     return $response;
 }
-function getMarzbanHosts($server_id){
+
+function getMarzbanHosts($server_id, $token = null){
     global $connection;
-    
+
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5125,8 +5167,14 @@ function getMarzbanHosts($server_id){
 
     $panel_url = $server_info['panel_url'];
 
-    $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
+    // گرفتن توکن فقط یکبار در صورت پاس داده نشدن
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
+
+    if(isset($token->detail)) {
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
 
     $panel_url .= '/api/core/config';
 
@@ -5140,13 +5188,15 @@ function getMarzbanHosts($server_id){
     ));
 
     $response = json_decode(curl_exec($curl));
-    
     curl_close($curl);
+
     return $response;
 }
-function addMarzbanUser($server_id, $remark, $volume, $days, $plan_id){
+
+function addMarzbanUser($server_id, $remark, $volume, $days, $plan_id, $token = null){
     global $connection;
-    
+
+    // گرفتن اطلاعات سرور
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5154,27 +5204,30 @@ function addMarzbanUser($server_id, $remark, $volume, $days, $plan_id){
     $stmt->close();
 
     $panel_url = $server_info['panel_url'];
-    $serverName = $server_info['username'];
-    $serverPass = $server_info['password'];
-    $serverType = $server_info['type'];
-    
-    
+
+    // گرفتن اطلاعات پلن
     $stmt = $connection->prepare("SELECT * FROM `server_plans` WHERE `id` = ?");
     $stmt->bind_param('i', $plan_id);
     $stmt->execute();
-    $planInfo = json_decode($stmt->get_result()->fetch_assoc()['custom_sni'],true);
+    $planInfo = json_decode($stmt->get_result()->fetch_assoc()['custom_sni'], true);
     $stmt->close();
 
-    $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
-    $postFields = array(
-        "inbounds" => $planInfo['inbounds'],
-        "proxies" => $planInfo['proxies'],
-        "expire" => time() + (86400 * $days),
-        "data_limit" => $volume * 1073741824,
-        "username" => urlencode($remark)
-    );
+    // گرفتن توکن اگر پاس داده نشده باشد
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
 
+    if(isset($token->detail)){
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
+
+    $postFields = array(
+        "inbounds"   => $planInfo['inbounds'],
+        "proxies"    => $planInfo['proxies'],
+        "expire"     => time() + (86400 * $days),
+        "data_limit" => $volume * 1073741824,
+        "username"   => urlencode($remark)
+    );
 
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $panel_url . "/api/user");
@@ -5182,28 +5235,33 @@ function addMarzbanUser($server_id, $remark, $volume, $days, $plan_id){
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($curl, CURLOPT_HTTPHEADER, array(
         'Accept: application/json',
-        'Authorization: Bearer ' .  $token->access_token,
+        'Authorization: Bearer ' . $token->access_token,
         'Content-Type: application/json'
     ));
     curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($postFields));
 
     $response = json_decode(curl_exec($curl));
     curl_close($curl);
+
     if(isset($response->detail) || !isset($response->links)){
-		$detail = $response->detail;
-        return (object) ['success'=>false, 'msg' => is_object($detail)?implode("-", (array) $detail):$detail];
+        $detail = $response->detail ?? "Unknown error";
+        return (object) ['success'=>false, 'msg' => is_object($detail) ? implode("-", (array) $detail) : $detail];
     }
-    $userInfo = getMarzbanUserInfo($server_id, $remark);
+
+    // گرفتن اطلاعات کامل کاربر با همان توکن
+    $userInfo = getMarzbanUserInfo($server_id, $remark, $token);
 
     return (object) [
-        'success'=>true,
-        'sub_link'=> $userInfo->subscription_url,
-        'vray_links' => $response->links
-        ];
+        'success'   => true,
+        'sub_link'  => $userInfo->subscription_url ?? null,
+        'vray_links'=> $response->links
+    ];
 }
-function editMarzbanConfig($server_id,$info){
+
+function editMarzbanConfig($server_id, $info, $token = null){
     global $connection;
-    
+
+    // گرفتن اطلاعات سرور
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5211,135 +5269,75 @@ function editMarzbanConfig($server_id,$info){
     $stmt->close();
 
     $panel_url = $server_info['panel_url'];
-    $serverName = $server_info['username'];
-    $serverPass = $server_info['password'];
 
-    $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->error];}
+    // گرفتن توکن در صورت نبودن
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
+    if(isset($token->detail)){
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
 
     $remark = $info['remark'];
     $configInfo = getMarzbanUser($server_id, $remark, $token);
-    
-    
-    $expireTime = $configInfo->expire;
-    $volume = $configInfo->data_limit;
-    $configState = $configInfo->status;
-    
+
+    $expireTime = $configInfo->expire ?? time();
+    $volume = $configInfo->data_limit ?? 0;
+
+    // محاسبه تاریخ انقضا
     if(isset($info['plus_day'])){
-        if($expireTime < time()) $expireTime = time() + (86400 * $info['plus_day']);
-        else $expireTime += (86400 * $info['plus_day']);
+        $expireTime = max($expireTime, time()) + (86400 * $info['plus_day']);
+    } elseif(isset($info['days'])){
+        $expireTime = time() + (86400 * $info['days']);
     }
-    elseif(isset($info['days'])) $expireTime = time() + (86400 * $info['days']);
-    
-    if(isset($info['plus_volume'])) $volume += $info['plus_volume'] * 1073741824;
-    elseif(isset($info['volume'])){
+
+    // محاسبه حجم مصرفی
+    if(isset($info['plus_volume'])){
+        $volume += $info['plus_volume'] * 1073741824;
+    } elseif(isset($info['volume'])){
         $volume = $info['volume'] * 1073741824;
         $response = resetMarzbanTraffic($server_id, $remark, $token);
-        
         if(!$response->success) return $response;
     }
-    
+
     $postFields = array(
-        "inbounds" => $configInfo->inbounds,
-        "proxies" => $configInfo->proxies,
+        "inbounds" => $configInfo->inbounds ?? [],
+        "proxies" => $configInfo->proxies ?? [],
         "expire" => $expireTime,
         "data_limit" => $volume,
         "username" => urlencode($remark),
-        "note" => $configInfo->note,
-        "data_limit_reset_strategy"=> $configInfo->data_limit_reset_strategy,
-        "status" => "active"
+        "note" => $configInfo->note ?? "",
+        "data_limit_reset_strategy"=> $configInfo->data_limit_reset_strategy ?? "none",
+        "status" => $configInfo->status ?? "active"
     );
-    
-    $panel_url .=  '/api/user/'. $remark;
+
+    $panel_url .= '/api/user/' . urlencode($remark);
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $panel_url);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
     curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($postFields));
     curl_setopt($curl, CURLOPT_HTTPHEADER, array(
         'Accept: application/json',
-        'Authorization: Bearer ' .  $token->access_token,
+        'Authorization: Bearer ' . $token->access_token,
         'Content-Type: application/json'
-        ));
-    
-    $response = curl_exec($curl);
-    curl_close($curl);
-    if(isset($response->detail)){
-		$detail = $response->detail;
-        return (object) ['success'=>false, 'msg' => is_object($detail)?implode("-", (array) $detail):$detail];
-    }
-    return (object) ['success'=>true];
-}
-function resetMarzbanTraffic($server_id, $remark, $token){
-    global $connection;
-    
-    $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
-    $stmt->bind_param("i", $server_id);
-    $stmt->execute();
-    $server_info = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    $panel_url = $server_info['panel_url'];
-    $serverName = $server_info['username'];
-    $serverPass = $server_info['password'];
-
-    if($token == null) $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
-
-    $panel_url .=  '/api/user/' . $remark .'/reset';
-
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $panel_url);
-    curl_setopt($curl, CURLOPT_POST , true);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-        'Accept: application/json',
-        'Authorization: Bearer ' .  $token->access_token
-    ));
-
-    $response = curl_exec($curl);
-    curl_close($curl);
-    if(isset($response->detail)){
-		$detail = $response->detail;
-        return (object) ['success'=>false, 'msg' => is_object($detail)?implode("-", (array) $detail):$detail];
-    }
-    return (object) ['success'=>true];
-}
-function renewMarzbanUUID($server_id,$remark){
-    global $connection;
-    $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
-    $stmt->bind_param("i", $server_id);
-    $stmt->execute();
-    $server_info = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    $panel_url = $server_info['panel_url'];
-    $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
-    $panel_url .= '/api/user/' . $remark .'/revoke_sub';
-
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $panel_url);
-    curl_setopt($curl, CURLOPT_POST , true);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-        'Accept: application/json',
-        'Authorization: Bearer ' .  $token->access_token
     ));
 
     $response = json_decode(curl_exec($curl));
     curl_close($curl);
+
     if(isset($response->detail)){
-		$detail = $response->detail;
-        return (object) ['success'=>false, 'msg' => is_object($detail)?implode("-", (array) $detail):$detail];
+        $detail = $response->detail;
+        return (object) ['success'=>false, 'msg' => is_object($detail) ? implode("-", (array) $detail) : $detail];
     }
-    $response = getMarzbanUserInfo($server_id, $remark);
-    return $response;
+
+    return (object) ['success'=>true];
 }
 
-function deleteMarzban($server_id,$remark){
+function resetMarzbanTraffic($server_id, $remark, $token = null){
     global $connection;
-    
+
+    // گرفتن اطلاعات سرور
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5347,37 +5345,126 @@ function deleteMarzban($server_id,$remark){
     $stmt->close();
 
     $panel_url = $server_info['panel_url'];
-    $serverName = $server_info['username'];
-    $serverPass = $server_info['password'];
-    $serverType = $server_info['type'];
-    
-    $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
-    $panel_url .=  '/api/user/'. urlencode($remark);
+
+    // گرفتن توکن در صورت نبودن
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
+    if(isset($token->detail)){
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
+
+    $panel_url .= '/api/user/' . urlencode($remark) . '/reset';
+
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $panel_url);
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+        'Accept: application/json',
+        'Authorization: Bearer ' . $token->access_token
+    ));
+
+    $response = json_decode(curl_exec($curl));
+    curl_close($curl);
+
+    if(isset($response->detail)){
+        $detail = $response->detail;
+        return (object) ['success'=>false, 'msg' => is_object($detail) ? implode("-", (array) $detail) : $detail];
+    }
+
+    return (object) ['success'=>true];
+}
+
+function renewMarzbanUUID($server_id, $remark, $token = null){
+    global $connection;
+
+    // گرفتن اطلاعات سرور
+    $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
+    $stmt->bind_param("i", $server_id);
+    $stmt->execute();
+    $server_info = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $panel_url = $server_info['panel_url'];
+
+    // گرفتن توکن در صورت نبودن
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
+    if(isset($token->detail)){
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
+
+    $panel_url .= '/api/user/' . urlencode($remark) . '/revoke_sub';
+
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $panel_url);
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+        'Accept: application/json',
+        'Authorization: Bearer ' . $token->access_token
+    ));
+
+    $response = json_decode(curl_exec($curl));
+    curl_close($curl);
+
+    if(isset($response->detail)){
+        $detail = $response->detail;
+        return (object) ['success'=>false, 'msg' => is_object($detail) ? implode("-", (array) $detail) : $detail];
+    }
+
+    // دریافت اطلاعات جدید کاربر بعد از ری‌ووک
+    return getMarzbanUserInfo($server_id, $remark);
+}
+
+function deleteMarzban($server_id, $remark, $token = null){
+    global $connection;
+
+    // گرفتن اطلاعات سرور
+    $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
+    $stmt->bind_param("i", $server_id);
+    $stmt->execute();
+    $server_info = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $panel_url = $server_info['panel_url'];
+
+    // گرفتن توکن در صورت نبودن
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
+    if(isset($token->detail)){
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
+
+    $panel_url .= '/api/user/' . urlencode($remark);
 
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $panel_url);
     curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
-    curl_setopt($curl, CURLOPT_HTTPGET, true);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($curl, CURLOPT_HTTPHEADER, array(
         'Accept: application/json',
-        'Authorization: Bearer ' .  $token->access_token
+        'Authorization: Bearer ' . $token->access_token
     ));
 
     $response = json_decode(curl_exec($curl));
     curl_close($curl);
-    
+
     if(isset($response->detail)){
-		$detail = $response->detail;
-        return (object) ['success'=>false, 'msg' => is_object($detail)?implode("-", (array) $detail):$detail];
+        $detail = $response->detail;
+        return (object) ['success'=>false, 'msg' => is_object($detail) ? implode("-", (array) $detail) : $detail];
     }
-    
+
     return (object) ['success'=>true];
 }
-function changeMarzbanState($server_id,$remark){
+
+function changeMarzbanState($server_id, $remark, $token = null){
     global $connection;
-    
+
+    // گرفتن اطلاعات سرور
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
@@ -5385,15 +5472,22 @@ function changeMarzbanState($server_id,$remark){
     $stmt->close();
 
     $panel_url = $server_info['panel_url'];
-    $serverName = $server_info['username'];
-    $serverPass = $server_info['password'];
-    $serverType = $server_info['type'];
-    
-    $token = getMarzbanToken($server_id);
-    if(isset($token->detail)){return (object) ['success'=>false, 'msg'=>$token->detail];}
-    $configInfo = getMarzbanUser($server_id, $remark, $token);
 
-    $panel_url .=  '/api/user/'. $remark;
+    // گرفتن توکن در صورت نبودن
+    if($token === null) {
+        $token = getMarzbanToken($server_id);
+    }
+    if(isset($token->detail)){
+        return (object) ['success'=>false, 'msg'=>$token->detail];
+    }
+
+    // گرفتن اطلاعات کاربر
+    $configInfo = getMarzbanUser($server_id, $remark, $token);
+    if(isset($configInfo->msg)){ // بررسی خطا در getMarzbanUser
+        return (object) ['success'=>false, 'msg'=>$configInfo->msg];
+    }
+
+    $panel_url .= '/api/user/' . urlencode($remark);
 
     $postFields = array(
         "inbounds" => $configInfo->inbounds,
@@ -5403,9 +5497,8 @@ function changeMarzbanState($server_id,$remark){
         "username" => urlencode($remark),
         "note" => $configInfo->note,
         "data_limit_reset_strategy"=> $configInfo->data_limit_reset_strategy,
-        "status" => $configInfo->status == "active"?"disabled":"active"
+        "status" => ($configInfo->status === "active") ? "disabled" : "active"
     );
-
 
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $panel_url);
@@ -5413,7 +5506,7 @@ function changeMarzbanState($server_id,$remark){
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($curl, CURLOPT_HTTPHEADER, array(
         'Accept: application/json',
-        'Authorization: Bearer ' .  $token->access_token,
+        'Authorization: Bearer ' . $token->access_token,
         'Content-Type: application/json'
     ));
     curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($postFields));
@@ -5422,11 +5515,13 @@ function changeMarzbanState($server_id,$remark){
     curl_close($curl);
 
     if(isset($response->detail)){
-		$detail = $response->detail;
-        return (object) ['success'=>false, 'msg' => is_object($detail)?implode("-", (array) $detail):$detail];
+        $detail = $response->detail;
+        return (object) ['success'=>false, 'msg' => is_object($detail) ? implode("-", (array) $detail) : $detail];
     }
+
     return (object) ['success'=>true];
 }
+
 function getJson($server_id){
     global $connection;
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
