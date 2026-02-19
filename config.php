@@ -249,8 +249,9 @@ function getMainKeys(){
             [['text'=>$buttonValues['my_subscriptions'],'callback_data'=>"agentConfigsList"]],
             ]);
     }else{
-        $mainKeys = array_merge($mainKeys,[
-            (($botState['agencyState'] == "on" && $userInfo['is_agent'] == 0)?[
+       #دوخط پایین تر آنو آف کردم تا درخواست همکاری برداشته شه
+	   $mainKeys = array_merge($mainKeys,[
+            (($botState['agencyState'] == "off" && $userInfo['is_agent'] == 0)?[
                 ['text'=>$buttonValues['request_agency'],'callback_data'=>"requestAgency"]
                 ]:
                 []),
