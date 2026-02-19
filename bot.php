@@ -9763,8 +9763,8 @@ if(preg_match('/^addServerPanePassword(.*)/',$userInfo['step'],$match) and $text
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_POST, 1);
-        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 20);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 20); 
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 10); 
         curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($postFields));
         curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/x-www-form-urlencoded',
@@ -9791,8 +9791,8 @@ if(preg_match('/^addServerPanePassword(.*)/',$userInfo['step'],$match) and $text
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20); 
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10); 
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postFields));
         $loginResponse = json_decode(curl_exec($ch),true);
         curl_close($ch);
@@ -9905,8 +9905,8 @@ if(preg_match('/^editServerPanePassword(.*)/',$userInfo['step'],$match) and $tex
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_POST, 1);
-        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 20);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 20); 
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 10); 
         curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($postFields));
         curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/x-www-form-urlencoded',
@@ -9934,8 +9934,8 @@ if(preg_match('/^editServerPanePassword(.*)/',$userInfo['step'],$match) and $tex
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20); 
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10); 
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postFields));
         $loginResponse = json_decode(curl_exec($ch),true);
         curl_close($ch);
