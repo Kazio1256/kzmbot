@@ -2,49 +2,48 @@
 include_once '../baseInfo.php';
 include_once '../config.php';
 
-$sellState=$botState['sellState']=="off"?"خاموش ❌":"روشن ✅";
-$searchState=$botState['searchState']=="off"?"خاموش ❌":"روشن ✅";
-$rewaredTime = ($botState['rewaredTime']??0);
-$rewaredChannel = $botState['rewardChannel'];
+#
+date_default_timezone_set('Asia/Tehran');
+$rewardChannel = $botState['rewardChannel'] ?? null;
 
-if($rewaredTime>0 && $rewaredChannel != null){
-    $lastTime = $botState['lastRewardMessage']??0;
-    if(time() > $lastTime){
-        $time = time() - ($rewaredTime * 60 * 60);
-        
-        $stmt = $connection->prepare("SELECT SUM(price) as total FROM `pays` WHERE `request_date` > ? AND (`state` = 'paid' OR `state` = 'approved')");
-        $stmt->bind_param("i", $time);
+if ($rewardChannel) {
+
+    $currentHour   = (int)date('H');
+    $currentMinute = (int)date('i');
+
+    // فقط بین 01:00 تا 01:05 اجرا شود
+    if ($currentHour == 1 && $currentMinute >= 0 && $currentMinute <= 2) {
+
+        $fromTime = time() - 86400;
+
+        $stmt = $connection->prepare("
+            SELECT SUM(price) AS total 
+            FROM pays 
+            WHERE request_date >= ?
+              AND (state = 'paid' OR state = 'approved')
+        ");
+        $stmt->bind_param("i", $fromTime);
         $stmt->execute();
-        $totalRewards = number_format($stmt->get_result()->fetch_assoc()['total']);
-        $stmt->close();
-        
-        $botState['lastRewardMessage']=time() + ($rewaredTime * 60 * 60);
-        
-        $stmt = $connection->prepare("SELECT * FROM `setting` WHERE `type` = 'BOT_STATES'");
-        $stmt->execute();
-        $isExists = $stmt->get_result();
-        $stmt->close();
-        if($isExists->num_rows>0) $query = "UPDATE `setting` SET `value` = ? WHERE `type` = 'BOT_STATES'";
-        else $query = "INSERT INTO `setting` (`type`, `value`) VALUES ('BOT_STATES', ?)";
-        $newData = json_encode($botState);
-        
-        $stmt = $connection->prepare($query);
-        $stmt->bind_param("s", $newData);
-        $stmt->execute();
+        $total = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
         $stmt->close();
 
-        $txt = "⁮⁮ ⁮⁮ ⁮⁮ ⁮⁮
-🔰درآمد من در $rewaredTime ساعت گذشته
+        $totalFormatted = number_format($total);
 
-💰مبلغ : $totalRewards تومان
+        $txt = "
+🔰 گزارش درآمد ۲۴ ساعت گذشته
 
-☑️ $channelLock
+💰 مبلغ : {$totalFormatted} تومان
+🕐 بازه ارسال : بین 01:00 تا 01:02 بامداد
+        ";
 
-";
-        sendMessage($txt, null, null, $rewaredChannel);
+        sendMessage($txt, null, null, $rewardChannel);
     }
-}    
+}
 
+
+
+#
+    
 if($botState['cartToCartAutoAcceptState']=="on"){
     $date = strtotime("-" . ($botState['cartToCartAutoAcceptTime']??10) . " minutes");
     $stmt = $connection->prepare("SELECT * FROM `pays` WHERE `state` = 'have_sent' AND `request_date` <= ?");
