@@ -11,8 +11,8 @@ if ($rewardChannel) {
     $currentHour   = (int)date('H');
     $currentMinute = (int)date('i');
 
-    // فقط بین 01:00 تا 01:05 اجرا شود
-    if ($currentHour == 1 && $currentMinute >= 0 && $currentMinute <= 2) {
+    // فقط بین 01:00 تا 01:01 اجرا شود
+    if ($currentHour == 1 && $currentMinute >= 0 && $currentMinute <= 1) {
 
         $fromTime = time() - 86400;
 
@@ -30,11 +30,10 @@ if ($rewardChannel) {
         $totalFormatted = number_format($total);
 
         $txt = "
-🔰 گزارش درآمد ۲۴ ساعت گذشته
+🔰 درآمد ربات در ۲۴ ساعت گذشته
 
 💰 مبلغ : {$totalFormatted} تومان
-🕐 بازه ارسال : بین 01:00 تا 01:02 بامداد
-        ";
+🕐 بازه ارسال گزارش : بین 01:00 تا 01:01 بامداد";
 
         sendMessage($txt, null, null, $rewardChannel);
     }
