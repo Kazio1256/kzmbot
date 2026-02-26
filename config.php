@@ -5262,77 +5262,164 @@ function addMarzbanUser($server_id, $remark, $volume, $days, $plan_id, $token = 
 function editMarzbanConfig($server_id, $info, $token = null){
     global $connection;
 
-    // گرفتن اطلاعات سرور
+    // --- 1) Validate input
+    if(!isset($info['remark']) || trim($info['remark']) === ''){
+        return (object)['success' => false, 'msg' => 'remark is required'];
+    }
+    $remark = trim($info['remark']);
+
+    // --- 2) Load server config
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
     $server_info = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    $panel_url = $server_info['panel_url'];
+    if(!$server_info || !isset($server_info['panel_url'])){
+        return (object)['success' => false, 'msg' => 'Server config not found'];
+    }
 
-    // گرفتن توکن در صورت نبودن
-    if($token === null) {
+    $panel_url = rtrim($server_info['panel_url'], '/');
+
+    // --- 3) Get token (reuse if provided)
+    if($token === null){
         $token = getMarzbanToken($server_id);
     }
     if(isset($token->detail)){
-        return (object) ['success'=>false, 'msg'=>$token->detail];
+        return (object)['success' => false, 'msg' => $token->detail];
+    }
+    if(!isset($token->access_token)){
+        return (object)['success' => false, 'msg' => 'Token access_token missing'];
     }
 
-    $remark = $info['remark'];
+    // --- 4) Fetch current user info (reuse token)
     $configInfo = getMarzbanUser($server_id, $remark, $token);
 
-    $expireTime = $configInfo->expire ?? time();
-    $volume = $configInfo->data_limit ?? 0;
+    // If getMarzbanUser returned your own error format:
+    if(isset($configInfo->msg)){
+        return (object)['success' => false, 'msg' => $configInfo->msg];
+    }
+    // If Marzban API returned error details:
+    if(isset($configInfo->detail)){
+        $detail = $configInfo->detail;
+        return (object)['success' => false, 'msg' => is_object($detail) ? implode("-", (array)$detail) : $detail];
+    }
+    // If user not found / invalid response:
+    if(!isset($configInfo->username)){
+        return (object)['success' => false, 'msg' => 'User not found or invalid response from Marzban'];
+    }
 
-    // محاسبه تاریخ انقضا
+    // --- 5) Prepare new expire & data_limit
+    $currentExpire = isset($configInfo->expire) ? (int)$configInfo->expire : 0;
+    $currentLimit  = isset($configInfo->data_limit) ? (int)$configInfo->data_limit : 0;
+
+    $expireTime = $currentExpire > 0 ? $currentExpire : time();
+    $volume     = $currentLimit >= 0 ? $currentLimit : 0;
+
+    // Expire logic
     if(isset($info['plus_day'])){
-        $expireTime = max($expireTime, time()) + (86400 * $info['plus_day']);
+        $plusDay = (int)$info['plus_day'];
+        if($plusDay > 0){
+            $expireTime = max($expireTime, time()) + (86400 * $plusDay);
+        }
     } elseif(isset($info['days'])){
-        $expireTime = time() + (86400 * $info['days']);
+        $days = (int)$info['days'];
+        if($days > 0){
+            $expireTime = time() + (86400 * $days);
+        }
     }
 
-    // محاسبه حجم مصرفی
+    // Volume logic (GiB)
     if(isset($info['plus_volume'])){
-        $volume += $info['plus_volume'] * 1073741824;
+        $plusVol = (int)$info['plus_volume'];
+        if($plusVol > 0){
+            $volume += ($plusVol * 1073741824);
+        }
     } elseif(isset($info['volume'])){
-        $volume = $info['volume'] * 1073741824;
-        $response = resetMarzbanTraffic($server_id, $remark, $token);
-        if(!$response->success) return $response;
+        // Set exact limit (and optionally reset usage)
+        $vol = (int)$info['volume'];
+        if($vol >= 0){
+            $volume = ($vol * 1073741824);
+
+            // Keep your old behavior: reset traffic when setting volume
+            // If you DON'T want reset on volume set, comment next lines
+            $reset = resetMarzbanTraffic($server_id, $remark, $token);
+            if(isset($reset->success) && !$reset->success){
+                return $reset;
+            }
+        }
     }
 
+    // --- 6) Build PUT body
     $postFields = array(
         "inbounds" => $configInfo->inbounds ?? [],
-        "proxies" => $configInfo->proxies ?? [],
-        "expire" => $expireTime,
+        "proxies"  => $configInfo->proxies ?? [],
+        "expire"   => $expireTime,
         "data_limit" => $volume,
-        "username" => urlencode($remark),
+        "username" => $remark, // IMPORTANT: no urlencode in JSON
         "note" => $configInfo->note ?? "",
-        "data_limit_reset_strategy"=> $configInfo->data_limit_reset_strategy ?? "none",
+        "data_limit_reset_strategy" => $configInfo->data_limit_reset_strategy ?? "none",
         "status" => $configInfo->status ?? "active"
     );
 
-    $panel_url .= '/api/user/' . urlencode($remark);
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $panel_url);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
-    curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($postFields));
-    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-        'Accept: application/json',
-        'Authorization: Bearer ' . $token->access_token,
-        'Content-Type: application/json'
-    ));
+    // --- 7) PUT to Marzban
+    $url = $panel_url . '/api/user/' . urlencode($remark);
 
-    $response = json_decode(curl_exec($curl));
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => 'PUT',
+        CURLOPT_POSTFIELDS => json_encode($postFields),
+        CURLOPT_HTTPHEADER => [
+            'Accept: application/json',
+            'Authorization: Bearer ' . $token->access_token,
+            'Content-Type: application/json'
+        ],
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_FOLLOWLOCATION => true
+    ]);
+
+    $raw = curl_exec($curl);
+    $err = curl_error($curl);
+    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
     curl_close($curl);
+
+    if($err){
+        return (object)['success' => false, 'msg' => $err];
+    }
+
+    $response = json_decode($raw);
+
+    // If response is not JSON, still return useful debug info
+    if($response === null && json_last_error() !== JSON_ERROR_NONE){
+        return (object)[
+            'success' => false,
+            'msg' => 'Invalid JSON response from Marzban',
+            'http_code' => $httpCode,
+            'raw' => $raw
+        ];
+    }
 
     if(isset($response->detail)){
         $detail = $response->detail;
-        return (object) ['success'=>false, 'msg' => is_object($detail) ? implode("-", (array) $detail) : $detail];
+        return (object)[
+            'success' => false,
+            'msg' => is_object($detail) ? implode("-", (array)$detail) : $detail,
+            'http_code' => $httpCode
+        ];
     }
 
-    return (object) ['success'=>true];
+    // Optional: verify by fetching user again (helps debugging)
+    // $after = getMarzbanUser($server_id, $remark, $token);
+
+    return (object)[
+        'success' => true,
+        'http_code' => $httpCode,
+        'expire' => $expireTime,
+        'data_limit' => $volume
+    ];
 }
 
 function resetMarzbanTraffic($server_id, $remark, $token = null){
