@@ -7451,67 +7451,97 @@ if(preg_match('/updateConfigConnectionLink(\d+)/', $data,$match)){
     $keys = getOrderDetailKeys($from_id, $oid);
     editText($message_id, $keys['msg'], $keys['keyboard'],"HTML");
 }
+
+
 if(preg_match('/changAccountConnectionLink(\d+)/', $data,$match)){
     alert($mainValues['please_wait_message']);
-    $oid = $match[1];
+    $oid = (int)$match[1];
 
+    // گرفتن اطلاعات سفارش
     $stmt = $connection->prepare("SELECT * FROM `orders_list` WHERE `id`=?");
     $stmt->bind_param("i", $oid);
     $stmt->execute();
     $order = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
+    if(!$order){
+        sendMessage("❌ سفارش پیدا نشد");
+        return;
+    }
 
-    $date = jdate("Y-m-d H:i",$order['date']);
-    $expire_date = jdate("Y-m-d H:i",$order['expire_date']);
-    $remark = $order['remark'];
-    $uuid = $order['uuid']??"0";
+    $remark    = $order['remark'];
+    $uuid      = $order['uuid'] ?? "0";
     $inboundId = $order['inbound_id'];
-    $acc_link = $order['link'];
     $server_id = $order['server_id'];
-    $rahgozar = $order['rahgozar'];
-    
-    $file_id = $order['fileid'];
-    
-    $stmt = $connection->prepare("SELECT * FROM `server_plans` WHERE `id`=?");
-    $stmt->bind_param("i", $file_id);
-    $stmt->execute();
-    $file_detail = $stmt->get_result()->fetch_assoc();
-    $customPath = $file_detail['custom_path'];
-    $customPort = $file_detail['custom_port'];
-    $customSni = $file_detail['custom_sni'];
-    
-    
+    $rahgozar  = $order['rahgozar'];
+    $file_id   = $order['fileid'];
+
+    // 👇 این همون chat_id تلگرام کاربره
+    $targetChatId = (int)$order['userid'];
+
+    // گرفتن اطلاعات سرور
     $stmt = $connection->prepare("SELECT * FROM server_config WHERE id=?");
     $stmt->bind_param("i", $server_id);
     $stmt->execute();
     $server_info = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
-    $serverType = $server_info['type'];
 
+    if(!$server_info){
+        sendMessage("❌ سرور پیدا نشد");
+        return;
+    }
+
+    $serverType = $server_info['type'];
+    $panel_url  = rtrim($server_info['panel_url'], '/');
+
+    $subLinkToSend = null;
+
+    // ============================
+    // اگر مرزبان بود
+    // ============================
     if($serverType == "marzban"){
+
         $res = renewMarzbanUUID($server_id, $remark);
+
+        if(isset($res->detail)){
+            sendMessage("❌ خطا از مرزبان:\n" . $res->detail);
+            return;
+        }
+
         $vraylink = $res->links;
-        $newUuid = $newToken = str_replace("/sub/", "", $res->subscription_url);
+
+        // توکن جدید
+        $newToken = str_replace("/sub/", "", $res->subscription_url);
+
+        // uuid دست نزن
+        $newUuid  = $uuid;
+
+        // لینک سابسکریپشن جدید
+        $subLinkToSend = $panel_url . "/sub/" . $newToken;
+
     }else{
+
+        // ============================
+        // اگر XUI یا غیر مرزبان بود
+        // ============================
+
         $response = getJson($server_id)->obj;
+
         if($inboundId == 0){
             foreach($response as $row){
                 $clients = json_decode($row->settings)->clients;
-                if($clients[0]->id == $uuid || $clients[0]->password == $uuid) {
+                if($clients[0]->id == $uuid || $clients[0]->password == $uuid){
                     $port = $row->port;
                     $protocol = $row->protocol;
                     $netType = json_decode($row->streamSettings)->network;
                     break;
                 }
             }
-            
             $update_response = renewInboundUuid($server_id, $uuid);
         }else{
             foreach($response as $row){
-                if($row->id == $inboundId) {
-                    $port = $row->port; 
+                if($row->id == $inboundId){
+                    $port = $row->port;
                     $protocol = $row->protocol;
                     $netType = json_decode($row->streamSettings)->network;
                     break;
@@ -7519,20 +7549,56 @@ if(preg_match('/changAccountConnectionLink(\d+)/', $data,$match)){
             }
             $update_response = renewClientUuid($server_id, $inboundId, $uuid);
         }
-        $newUuid = $update_response->newUuid;
-        $vraylink = getConnectionLink($server_id, $newUuid, $protocol, $remark, $port, $netType, $inboundId, $rahgozar, $customPath, $customPort, $customSni);
+
+        $newUuid  = $update_response->newUuid;
+        $vraylink = getConnectionLink(
+            $server_id,
+            $newUuid,
+            $protocol,
+            $remark,
+            $port,
+            $netType,
+            $inboundId,
+            $rahgozar,
+            "",
+            "",
+            ""
+        );
+
         $newToken = RandomString(30);
+
+        // لینک ساب برای غیر مرزبان
+        $subLinkToSend = $botUrl . "settings/subLink.php?token=" . $newToken;
     }
 
-    
-    $vray_link = json_encode($vraylink);
-    $stmt = $connection->prepare("UPDATE `orders_list` SET `link`=?, `uuid` = ?, `token` = ? WHERE `id`=?");
+    // ============================
+    // آپدیت دیتابیس
+    // ============================
+    $vray_link = json_encode($vraylink, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    $stmt = $connection->prepare("UPDATE `orders_list` SET `link`=?, `uuid`=?, `token`=? WHERE `id`=?");
     $stmt->bind_param("sssi", $vray_link, $newUuid, $newToken, $oid);
     $stmt->execute();
     $stmt->close();
+
+    // آپدیت پیام
     $keys = getOrderDetailKeys($from_id, $oid);
-    editText($message_id, $keys['msg'], $keys['keyboard'],"HTML");
+    editText($message_id, $keys['msg'], $keys['keyboard'], "HTML");
+
+    // ============================
+    // ارسال لینک سابسکریپشن جدید به کاربر
+    // ============================
+    if(!empty($subLinkToSend) && $targetChatId > 0){
+        sendMessage(
+            "✅ ❤️لینک سابسکریپشن جدید خدمت شما:\n<code>{$subLinkToSend}</code>",
+            null,
+            "HTML",
+            $targetChatId
+        );
+    }
 }
+
+
 if(preg_match('/changeUserConfigState(\d+)/', $data,$match)){
     alert($mainValues['please_wait_message']);
     $oid = $match[1];
